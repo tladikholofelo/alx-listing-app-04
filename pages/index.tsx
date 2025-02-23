@@ -1,55 +1,46 @@
-// pages/index.tsx
-import React from "react";
-import { PROPERTYLISTINGSAMPLE } from "@/constants/index";
+import axios from "axios";
+import { useState, useEffect } from "react";
 
-const Hero: React.FC = () => {
-  return (
-    <section
-      className="bg-cover bg-center h-96 text-white flex items-center justify-center"
-      style={{
-        backgroundImage: "url('https://example.com/hero-bg.jpg')",
-      }}
-    >
-      <div className="text-center">
-        <h1 className="text-4xl font-bold">Find your favorite place here!</h1>
-        <p className="mt-2 text-xl">The best prices for over 2 million properties worldwide.</p>
-      </div>
-    </section>
-  );
-};
+export default function HomePage() {
+  const [properties, setProperties] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-const Listing: React.FC = () => {
+  useEffect(() => {
+    const fetchProperties = async () => {
+      try {
+        const response = await axios.get("/api/properties");
+        setProperties(response.data);
+      } catch (error) {
+        console.error("Error fetching properties:", error);
+        setError("Failed to load properties.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProperties();
+  }, []);
+
+  if (loading) return <p className="text-gray-500">Loading properties...</p>;
+  if (error) return <p className="text-red-500">{error}</p>;
+
   return (
-    <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-      {PROPERTYLISTINGSAMPLE.map((property) => (
-        <div
-          key={property.name}
-          className="border rounded-lg shadow-lg p-4"
-        >
-          <img
-            src={property.image}
-            alt={property.name}
-            className="w-full h-40 object-cover rounded-md"
-          />
-          <h3 className="mt-2 text-xl font-semibold">{property.name}</h3>
-          <p className="text-gray-500">{property.address.city}, {property.address.country}</p>
-          <div className="flex items-center mt-2">
-            <span className="text-yellow-500">{property.rating}⭐</span>
-            <span className="ml-2 text-xl font-bold">${property.price}</span>
-          </div>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-semibold mb-6">Available Properties</h1>
+      {properties.length === 0 ? (
+        <p className="text-gray-500">No properties available.</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {properties.map((property) => (
+            <div key={property.id} className="border p-4 rounded-lg shadow">
+              <h2 className="text-xl font-semibold">{property.name}</h2>
+              <p className="text-gray-600">{property.location}</p>
+              <p className="text-gray-800 font-bold">${property.pricePerNight} per night</p>
+            </div>
+          ))}
         </div>
-      ))}
-    </section>
-  );
-};
-
-const Home: React.FC = () => {
-  return (
-    <div>
-      <Hero />
-      <Listing />
+      )}
     </div>
   );
-};
-
-export default Home;
+}
